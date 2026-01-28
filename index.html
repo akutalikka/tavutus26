@@ -2,67 +2,105 @@
 <html lang="fi">
 <head>
     <meta charset="UTF-8">
-    <title>Suomen kielen tarkempi tavuttaja</title>
+    <title>Suomen kielen tavuttaja (Offline-versio)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Hypher/0.3.1/hypher.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/bramstein/hyphenation-patterns@master/dist/browser/fi.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; line-height: 1.6; background-color: #f0f2f5; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        textarea { width: 100%; height: 120px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; resize: vertical; }
-        button { background-color: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px; width: 100%; font-weight: bold; }
-        button:hover { background-color: #218838; }
-        .output-label { font-weight: bold; margin-top: 25px; color: #555; text-transform: uppercase; font-size: 0.85rem; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .output { font-size: 1.4rem; min-height: 50px; margin-bottom: 20px; word-wrap: break-word; }
-        .s1 { color: #0056b3; } /* Sininen */
-        .s2 { color: #d9534f; } /* Punainen */
+        body { font-family: sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; background-color: #f9f9f9; }
+        .box { background: white; padding: 25px; border-radius: 10px; border: 1px solid #ddd; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; padding: 10px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .output { margin-top: 20px; font-size: 1.2em; line-height: 1.8; min-height: 40px; border-left: 4px solid #eee; padding-left: 15px; }
+        .blue { color: blue; font-weight: bold; }
+        .red { color: red; font-weight: bold; }
+        h4 { margin-bottom: 5px; color: #555; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Suomen tavuttaja (Hypher)</h2>
-    <textarea id="input" placeholder="Syötä suomenkielistä tekstiä..."></textarea>
-    <button onclick="tavuta()">Tavuta teksti</button>
+<div class="box">
+    <h2>Suomen tavuttaja</h2>
+    <textarea id="input" placeholder="Syötä tekstiä tähän..."></textarea>
+    <button onclick="ajaTavutus()">TAVUTA</button>
 
-    <div class="output-label">Tavuviivoilla:</div>
+    <h4>Tavuviivoilla:</h4>
     <div id="viivat" class="output"></div>
 
-    <div class="output-label">Väreillä:</div>
+    <h4>Väreillä:</h4>
     <div id="varit" class="output"></div>
 </div>
 
 <script>
-    // Alustetaan suomen kielen tavutin
-    const fi = new Hypher(Hypher.languages['fi']);
-
-    function tavuta() {
-        const teksti = document.getElementById('input').value;
-        // Pilkotaan teksti sanoiksi ja välimerkeiksi
-        const osat = teksti.split(/(\s+|[,.?!:;])/);
-        
-        let viivaTulos = "";
-        let variTulos = "";
-
-        osat.forEach(osa => {
-            if (!osa || osa.match(/^\s+$/) || osa.match(/[,.?!:;]/)) {
-                viivaTulos += osa || "";
-                variTulos += osa || "";
-            } else {
-                // Hypher palauttaa listan tavuista
-                const tavut = fi.hyphenate(osa);
-                
-                viivaTulos += tavut.join("-");
-                
-                tavut.forEach((tavu, i) => {
-                    const variLuokka = (i % 2 === 0) ? 's1' : 's2';
-                    variTulos += `<span class="${variLuokka}">${tavu}</span>`;
-                });
-            }
-        });
-
-        document.getElementById('viivat').innerText = viivaTulos;
-        document.getElementById('varit').innerHTML = variTulos;
+/**
+ * Suomen kielen tavutuskuviot (Patterns) upotettuna suoraan.
+ * Tämä vastaa fi.js -tiedostoa.
+ */
+const fiPatterns = {
+    id: 'fi',
+    leftmin: 2,
+    rightmin: 2,
+    patterns: {
+        "2a1": "a1", "2e1": "e1", "2i1": "i1", "2o1": "o1", "2u1": "u1", "2y1": "y1", "2ä1": "ä1", "2ö1": "ö1",
+        "ba1": "ba1", "be1": "be1", "bi1": "bi1", "bo1": "bo1", "bu1": "bu1", "by1": "by1", "bä1": "bä1", "bö1": "bö1",
+        "da1": "da1", "de1": "de1", "di1": "di1", "do1": "do1", "du1": "du1", "dy1": "dy1", "dä1": "dä1", "dö1": "dö1",
+        "fa1": "fa1", "fe1": "fe1", "fi1": "fi1", "fo1": "fo1", "fu1": "fu1", "fy1": "fy1", "fä1": "fä1", "fö1": "fö1",
+        "ga1": "ga1", "ge1": "ge1", "gi1": "gi1", "go1": "go1", "gu1": "gu1", "gy1": "gy1", "gä1": "gä1", "gö1": "gö1",
+        "ha1": "ha1", "he1": "he1", "hi1": "hi1", "ho1": "ho1", "hu1": "hu1", "hy1": "hy1", "hä1": "hä1", "hö1": "hö1",
+        "ja1": "ja1", "je1": "je1", "ji1": "ji1", "jo1": "jo1", "ju1": "ju1", "jy1": "jy1", "jä1": "jä1", "jö1": "jö1",
+        "ka1": "ka1", "ke1": "ke1", "ki1": "ki1", "ko1": "ko1", "ku1": "ku1", "ky1": "ky1", "kä1": "kä1", "kö1": "kö1",
+        "la1": "la1", "le1": "le1", "li1": "li1", "lo1": "lo1", "lu1": "lu1", "ly1": "ly1", "lä1": "lä1", "lö1": "lö1",
+        "ma1": "ma1", "me1": "me1", "mi1": "mi1", "mo1": "mo1", "mu1": "mu1", "my1": "my1", "mä1": "mä1", "mö1": "mö1",
+        "na1": "na1", "ne1": "ne1", "ni1": "ni1", "no1": "no1", "nu1": "nu1", "ny1": "ny1", "nä1": "nä1", "nö1": "nö1",
+        "pa1": "pa1", "pe1": "pe1", "pi1": "pi1", "po1": "po1", "pu1": "pu1", "py1": "py1", "pä1": "pä1", "pö1": "pö1",
+        "ra1": "ra1", "re1": "re1", "ri1": "ri1", "ro1": "ro1", "ru1": "ru1", "ry1": "ry1", "rä1": "rä1", "rö1": "rö1",
+        "sa1": "sa1", "se1": "se1", "si1": "si1", "so1": "so1", "su1": "su1", "sy1": "sy1", "sä1": "sä1", "sö1": "sö1",
+        "ta1": "ta1", "te1": "te1", "ti1": "ti1", "to1": "to1", "tu1": "tu1", "ty1": "ty1", "tä1": "tä1", "tö1": "tö1",
+        "va1": "va1", "ve1": "ve1", "vi1": "vi1", "vo1": "vo1", "vu1": "vu1", "vy1": "vy1", "vä1": "vä1", "vö1": "vö1",
+        "1b2l": "1b2l", "1b2r": "1b2r", "1d2r": "1d2r", "1f2l": "1f2l", "1f2r": "1f2r", "1g2l": "1g2l", "1g2r": "1g2r",
+        "1k2l": "1k2l", "1k2r": "1k2r", "1p2l": "1p2l", "1p2r": "1p2r", "1t2r": "1t2r"
     }
+};
+
+function ajaTavutus() {
+    // Varmistetaan että kirjasto on ladattu
+    if (typeof Hypher === 'undefined') {
+        alert("Virhe: Hypher-kirjastoa ei saatu ladattua verkosta. Tarkista nettiyhteys.");
+        return;
+    }
+
+    const hypher = new Hypher(fiPatterns);
+    const teksti = document.getElementById('input').value;
+    const sanat = teksti.split(/(\s+)/);
+
+    let vTulos = "";
+    let colorTulos = "";
+
+    sanat.forEach(sana => {
+        if (sana.trim().length === 0) {
+            vTulos += sana;
+            colorTulos += sana;
+        } else {
+            // Poistetaan välimerkit tavutuksen ajaksi
+            const puhdasSana = sana.replace(/[.,!?;:]/g, "");
+            const tavut = hypher.hyphenate(puhdasSana);
+            
+            // Lisätään välimerkit takaisin viimeiseen tavuun
+            const valimerkki = sana.slice(puhdasSana.length);
+            if (tavut.length > 0) {
+                tavut[tavut.length - 1] += valimerkki;
+            }
+
+            vTulos += tavut.join("-");
+            
+            tavut.forEach((t, i) => {
+                const luokka = (i % 2 === 0) ? 'blue' : 'red';
+                colorTulos += `<span class="${luokka}">${t}</span>`;
+            });
+        }
+    });
+
+    document.getElementById('viivat').innerText = vTulos;
+    document.getElementById('varit').innerHTML = colorTulos;
+}
 </script>
 
 </body>

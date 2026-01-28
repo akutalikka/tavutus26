@@ -2,81 +2,68 @@
 <html lang="fi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suomen kielen tavuttaja</title>
+    <title>Suomen kielen tarkempi tavuttaja</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Hypher/0.3.1/hypher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/bramstein/hyphenation-patterns@master/dist/browser/fi.js"></script>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; background-color: #f4f4f9; }
-        textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; margin-bottom: 10px; }
-        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #0056b3; }
-        .result-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px; }
-        .syllable-blue { color: #0056b3; font-weight: bold; }
-        .syllable-red { color: #d9534f; font-weight: bold; }
-        h3 { margin-top: 20px; color: #333; }
-        .output { font-size: 1.2rem; word-wrap: break-word; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; line-height: 1.6; background-color: #f0f2f5; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 120px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; resize: vertical; }
+        button { background-color: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px; width: 100%; font-weight: bold; }
+        button:hover { background-color: #218838; }
+        .output-label { font-weight: bold; margin-top: 25px; color: #555; text-transform: uppercase; font-size: 0.85rem; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .output { font-size: 1.4rem; min-height: 50px; margin-bottom: 20px; word-wrap: break-word; }
+        .s1 { color: #0056b3; } /* Sininen */
+        .s2 { color: #d9534f; } /* Punainen */
     </style>
 </head>
 <body>
 
-    <h2>Tavuttaja</h2>
-    <p>Kirjoita suomenkielinen sana tai lyhyt teksti:</p>
-    <textarea id="inputText" placeholder="Esimerkki: tavutus on kivaa"></textarea>
-    <button onclick="processText()">Tavuta teksti</button>
+<div class="container">
+    <h2>Suomen tavuttaja (Hypher)</h2>
+    <textarea id="input" placeholder="Syötä suomenkielistä tekstiä..."></textarea>
+    <button onclick="tavuta()">Tavuta teksti</button>
 
-    <div class="result-box" id="resultBox" style="display:none;">
-        <h3>Tavuviivoilla:</h3>
-        <div id="hyphenatedOutput" class="output"></div>
+    <div class="output-label">Tavuviivoilla:</div>
+    <div id="viivat" class="output"></div>
 
-        <h3>Väritetyillä tavuilla:</h3>
-        <div id="coloredOutput" class="output"></div>
-    </div>
+    <div class="output-label">Väreillä:</div>
+    <div id="varit" class="output"></div>
+</div>
 
-    <script>
-        function hyphenateWord(word) {
-            // Hyvin pelkistetty suomen kielen tavutussääntö (vcv-sääntö)
-            // Tämä tunnistaa tavurajat vokaalien ja konsonanttien perusteella
-            if (word.length <= 2) return [word];
+<script>
+    // Alustetaan suomen kielen tavutin
+    const fi = new Hypher(Hypher.languages['fi']);
 
-            // Sääntö: tavuraja on ennen viimeistä konsonanttia vokaalien välissä
-            // Esim. "ka-la", "sa-ta-ma", "om-peli-kone"
-            const pattern = /([aeiouyäö]{1,2}[bcdfghjklmnpqrstvwxz]?)(?=[aeiouyäö])|([aeiouyäö]{1,2}[bcdfghjklmnpqrstvwxz](?=[bcdfghjklmnpqrstvwxz][aeiouyäö]))/gi;
-            
-            // Käytetään yksinkertaista regex-pohjaista pilkkomista
-            // Huom: Tämä on karkea arvio, suomen kieli on monimutkaista, 
-            // mutta toimii useimmille perussanoille.
-            return word.replace(/([aeiouyäö][bcdfghjklmnpqrstvwxz]?)(?=[bcdfghjklmnpqrstvwxz]?[aeiouyäö])/gi, '$1-').split('-');
-        }
+    function tavuta() {
+        const teksti = document.getElementById('input').value;
+        // Pilkotaan teksti sanoiksi ja välimerkeiksi
+        const osat = teksti.split(/(\s+|[,.?!:;])/);
+        
+        let viivaTulos = "";
+        let variTulos = "";
 
-        function processText() {
-            const input = document.getElementById('inputText').value;
-            const words = input.split(/(\s+)/); // Säilyttää välilyönnit
-            
-            let hyphenatedFull = "";
-            let coloredFull = "";
+        osat.forEach(osa => {
+            if (!osa || osa.match(/^\s+$/) || osa.match(/[,.?!:;]/)) {
+                viivaTulos += osa || "";
+                variTulos += osa || "";
+            } else {
+                // Hypher palauttaa listan tavuista
+                const tavut = fi.hyphenate(osa);
+                
+                viivaTulos += tavut.join("-");
+                
+                tavut.forEach((tavu, i) => {
+                    const variLuokka = (i % 2 === 0) ? 's1' : 's2';
+                    variTulos += `<span class="${variLuokka}">${tavu}</span>`;
+                });
+            }
+        });
 
-            words.forEach(word => {
-                if (word.trim().length === 0) {
-                    hyphenatedFull += word;
-                    coloredFull += word;
-                } else {
-                    const syllables = hyphenateWord(word);
-                    
-                    // Viivallinen versio
-                    hyphenatedFull += syllables.join("-");
-
-                    // Väritetty versio
-                    syllables.forEach((syl, index) => {
-                        const colorClass = index % 2 === 0 ? 'syllable-blue' : 'syllable-red';
-                        coloredFull += `<span class="${colorClass}">${syl}</span>`;
-                    });
-                }
-            });
-
-            document.getElementById('hyphenatedOutput').innerText = hyphenatedFull;
-            document.getElementById('coloredOutput').innerHTML = coloredFull;
-            document.getElementById('resultBox').style.display = 'block';
-        }
-    </script>
+        document.getElementById('viivat').innerText = viivaTulos;
+        document.getElementById('varit').innerHTML = variTulos;
+    }
+</script>
 
 </body>
 </html>
